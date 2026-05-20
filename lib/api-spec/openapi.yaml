@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: DWS 252 Immigration Application API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: immigration
+    description: Immigration application operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,112 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /immigration/applications:
+    get:
+      operationId: listApplications
+      tags: [immigration]
+      summary: List all immigration applications (admin only)
+      responses:
+        "200":
+          description: List of applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+    post:
+      operationId: createApplication
+      tags: [immigration]
+      summary: Submit a new immigration application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationInput"
+      responses:
+        "201":
+          description: Application created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: UID already submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /immigration/applications/{uid}:
+    get:
+      operationId: getApplication
+      tags: [immigration]
+      summary: Get application by UID
+      parameters:
+        - name: uid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Application found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteApplication
+      tags: [immigration]
+      summary: Delete an application (admin only)
+      parameters:
+        - name: uid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /immigration/stats:
+    get:
+      operationId: getStats
+      tags: [immigration]
+      summary: Get application statistics
+      responses:
+        "200":
+          description: Statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +142,122 @@ components:
       required:
         - status
 
+    Application:
+      type: object
+      required:
+        - id
+        - uid
+        - nickname
+        - allianceName
+        - nationality
+        - gender
+        - grade
+        - towerLevel
+        - combatPower
+        - desiredAlliance
+        - createdAt
+      properties:
+        id:
+          type: integer
+        uid:
+          type: string
+        nickname:
+          type: string
+        allianceName:
+          type: string
+        nationality:
+          type: string
+        gender:
+          type: string
+          enum: [male, female]
+        grade:
+          type: string
+          enum: [normal, intermediate, advanced, special]
+        towerLevel:
+          type: string
+        combatPower:
+          type: number
+        desiredAlliance:
+          type: string
+        createdAt:
+          type: string
+
+    ApplicationInput:
+      type: object
+      required:
+        - uid
+        - nickname
+        - allianceName
+        - nationality
+        - gender
+        - grade
+        - towerLevel
+        - combatPower
+        - desiredAlliance
+      properties:
+        uid:
+          type: string
+        nickname:
+          type: string
+        allianceName:
+          type: string
+        nationality:
+          type: string
+        gender:
+          type: string
+          enum: [male, female]
+        grade:
+          type: string
+          enum: [normal, intermediate, advanced, special]
+        towerLevel:
+          type: string
+        combatPower:
+          type: number
+        desiredAlliance:
+          type: string
+
+    Stats:
+      type: object
+      required:
+        - total
+        - byGrade
+        - byGender
+      properties:
+        total:
+          type: integer
+        byGrade:
+          type: object
+          properties:
+            normal:
+              type: integer
+            intermediate:
+              type: integer
+            advanced:
+              type: integer
+            special:
+              type: integer
+          required: [normal, intermediate, advanced, special]
+        byGender:
+          type: object
+          properties:
+            male:
+              type: integer
+            female:
+              type: integer
+          required: [male, female]
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    SuccessResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean

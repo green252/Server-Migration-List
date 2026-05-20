@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
-}
+export type StatsByGrade = {
+  normal: number;
+  intermediate: number;
+  advanced: number;
+  special: number;
+};
